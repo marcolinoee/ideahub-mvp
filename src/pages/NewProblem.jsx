@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import toast from 'react-hot-toast'; // <--- Importamos o Toast
 
 export default function NewProblem() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Dados do Formulário
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Outros');
   const [severity, setSeverity] = useState('Médio');
   
-  // Arrays para múltipla escolha
   const [affected, setAffected] = useState([]);
   const [impact, setImpact] = useState([]);
 
-  // Localização e Imagem
-  const [location, setLocation] = useState(null); // { lat, long }
+  const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
   const [imageFile, setImageFile] = useState(null);
 
-  // Funções Auxiliares
   const toggleItem = (item, list, setList) => {
     if (list.includes(item)) {
       setList(list.filter(i => i !== item));
@@ -31,31 +28,37 @@ export default function NewProblem() {
   };
 
   const getGPS = () => {
-    if (!navigator.geolocation) return alert('Seu navegador não suporta GPS.');
+    if (!navigator.geolocation) return toast.error('Seu navegador não suporta GPS.');
+    
+    const toastId = toast.loading('Buscando satélites...'); // Notificação de carregamento
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocation({
           lat: position.coords.latitude,
           long: position.coords.longitude
         });
-        alert('Localização capturada com sucesso!');
+        toast.dismiss(toastId); // Remove o "Carregando"
+        toast.success('Localização capturada!');
       },
-      () => alert('Erro ao pegar localização. Verifique as permissões.')
+      () => {
+        toast.dismiss(toastId);
+        toast.error('Erro ao pegar localização. Verifique as permissões.');
+      }
     );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    const toastId = toast.loading('Salvando problema...'); // Feedback imediato
 
     try {
-      // 1. Pegar usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Você precisa estar logado.');
 
       let imageUrl = null;
 
-      // 2. Upload da Imagem (se houver)
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -65,7 +68,6 @@ export default function NewProblem() {
         
         if (uploadError) throw uploadError;
         
-        // Pegar URL pública
         const { data: publicData } = supabase.storage
           .from('problem-images')
           .getPublicUrl(fileName);
@@ -73,7 +75,6 @@ export default function NewProblem() {
         imageUrl = publicData.publicUrl;
       }
 
-      // 3. Salvar no Banco
       const { error: dbError } = await supabase.from('problems').insert({
         user_id: user.id,
         title,
@@ -90,12 +91,14 @@ export default function NewProblem() {
 
       if (dbError) throw dbError;
 
-      alert('Problema registrado com sucesso!');
+      toast.dismiss(toastId);
+      toast.success('Problema registrado com sucesso! 🎉');
       navigate('/dashboard');
 
     } catch (error) {
+      toast.dismiss(toastId);
       console.error(error);
-      alert('Erro ao salvar: ' + error.message);
+      toast.error('Erro ao salvar: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -108,7 +111,6 @@ export default function NewProblem() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* Título e Descrição */}
           <div>
             <label className="block font-medium text-gray-700">Título do Problema</label>
             <input required value={title} onChange={e => setTitle(e.target.value)} className="w-full border p-3 rounded-lg mt-1" placeholder="Ex: Buraco na rua X" />
@@ -119,7 +121,14 @@ export default function NewProblem() {
             <textarea required value={description} onChange={e => setDescription(e.target.value)} className="w-full border p-3 rounded-lg mt-1" rows="3" placeholder="Descreva os detalhes..." />
           </div>
 
-          {/* Localização (GPS vs Manual) */}
+          {/* Filtros de Categoria (Adicionei para ficar completo conforme wireframe) */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">Categoria</label>
+            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full border p-3 rounded-lg bg-white">
+              {['Saúde', 'Educação', 'Transporte', 'Segurança', 'Trabalho', 'Meio Ambiente', 'Outros'].map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
             <label className="block font-bold text-ideahub-brand mb-2">Onde acontece?</label>
             <div className="flex gap-3 mb-3">
@@ -130,7 +139,6 @@ export default function NewProblem() {
             <input value={address} onChange={e => setAddress(e.target.value)} className="w-full border p-3 rounded-lg" placeholder="Ou digite o endereço (Rua, Bairro...)" />
           </div>
 
-          {/* Gravidade (Seleção Única) */}
           <div>
             <label className="block font-medium text-gray-700 mb-2">Gravidade</label>
             <div className="flex gap-3">
@@ -145,7 +153,6 @@ export default function NewProblem() {
             </div>
           </div>
 
-          {/* Quem é afetado? (Múltipla Escolha) */}
           <div>
             <label className="block font-medium text-gray-700 mb-2">Quem é afetado?</label>
             <div className="flex flex-wrap gap-2">
@@ -160,15 +167,13 @@ export default function NewProblem() {
             </div>
           </div>
 
-          {/* Upload de Foto */}
           <div>
             <label className="block font-medium text-gray-700 mb-2">Foto (Opcional)</label>
             <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} className="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
           </div>
 
-          {/* Botão Enviar */}
           <button disabled={loading} className="w-full bg-ideahub-accent text-ideahub-brand font-bold py-4 rounded-xl text-lg hover:shadow-lg transition-all">
-            {loading ? 'Enviando...' : 'Registrar Problema'}
+            {loading ? 'Salvando...' : 'Registrar Problema'}
           </button>
 
         </form>
