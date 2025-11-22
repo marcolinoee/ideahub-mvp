@@ -92,7 +92,10 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-300 hidden md:inline">Olá, {user.email}</span>
+          <Link to="/profile" className="text-sm text-gray-300 hover:text-white hidden md:inline flex items-center gap-2 group">
+            <span>Olá, {user.email}</span>
+            <span className="bg-gray-700 p-1 rounded-full group-hover:bg-gray-600">👤</span>
+          </Link>
           {isModerator && (
             <Link to="/admin" className="bg-ideahub-accent text-ideahub-brand px-4 py-2 rounded-lg font-bold hover:brightness-110 transition-all flex items-center gap-2 shadow-[0_0_10px_rgba(163,230,53,0.4)]">
               🛡️ Admin

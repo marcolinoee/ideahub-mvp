@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import CommentsSection from '../components/CommentsSection'; // <--- Importamos o componente novo
+import CommentsSection from '../components/CommentsSection';
 
 export default function ProblemDetails() {
   const { id } = useParams();
@@ -100,6 +100,28 @@ export default function ProblemDetails() {
     }
   };
 
+  // --- NOVA FUNÇÃO: COMPARTILHAR ---
+  const handleShare = async () => {
+    const shareData = {
+      title: `IdeaHub: ${problem.title}`,
+      text: `Veja este problema reportado na minha comunidade: ${problem.title}. Ajude a resolver!`,
+      url: window.location.href // Pega a URL atual da página
+    };
+
+    // Verifica se o navegador suporta compartilhamento nativo (Celulares geralmente suportam)
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Compartilhamento cancelado pelo usuário');
+      }
+    } else {
+      // Fallback para PC: Copia o link
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copiado para a área de transferência! 📋');
+    }
+  };
+
   const updateStatus = async (newStatus) => {
     const { error } = await supabase.from('problems').update({ status: newStatus }).eq('id', id);
     if (error) toast.error('Erro ao atualizar.');
@@ -128,7 +150,7 @@ export default function ProblemDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header e Navegação (Igual anterior) */}
+      {/* Header e Navegação */}
       <div className="bg-white shadow-sm border-b px-6 py-4 sticky top-0 z-20">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -146,7 +168,7 @@ export default function ProblemDetails() {
 
       <div className="max-w-4xl mx-auto p-6 mt-6">
         
-        {/* Painel Admin (Se for moderador) */}
+        {/* Painel Admin */}
         {isModerator && (
           <div className="bg-ideahub-brand text-white p-6 rounded-xl shadow-lg mb-8 border-l-4 border-ideahub-accent">
             <h3 className="font-bold mb-4">🛡️ Moderação</h3>
@@ -165,18 +187,29 @@ export default function ProblemDetails() {
                 {problem.category}
               </span>
               
-              {/* BOTÃO DE LIKE/APOIAR */}
-              <button 
-                onClick={handleToggleLike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all border ${
-                  hasLiked 
-                    ? 'bg-ideahub-accent text-ideahub-brand border-ideahub-accent' 
-                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <span>{hasLiked ? '👍 Apoiado' : '🤍 Apoiar'}</span>
-                <span className="bg-white/50 px-2 rounded text-sm">{likesCount}</span>
-              </button>
+              <div className="flex gap-2">
+                {/* BOTÃO DE COMPARTILHAR (NOVO) */}
+                <button 
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all border bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-ideahub-brand"
+                  title="Compartilhar"
+                >
+                  📤 <span className="hidden sm:inline">Compartilhar</span>
+                </button>
+
+                {/* BOTÃO DE LIKE/APOIAR */}
+                <button 
+                  onClick={handleToggleLike}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all border ${
+                    hasLiked 
+                      ? 'bg-ideahub-accent text-ideahub-brand border-ideahub-accent' 
+                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>{hasLiked ? '👍 Apoiado' : '🤍 Apoiar'}</span>
+                  <span className="bg-white/50 px-2 rounded text-sm">{likesCount}</span>
+                </button>
+              </div>
             </div>
             
             <h1 className="text-3xl font-bold text-gray-800 mb-4">{problem.title}</h1>
@@ -198,9 +231,7 @@ export default function ProblemDetails() {
         {/* Grid: Mapa + Comentários + Ações */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* Coluna Principal (Mapa + Comentários) */}
           <div className="md:col-span-2 space-y-6">
-            {/* Mapa */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-800 mb-4">📍 Localização</h3>
               {problem.latitude ? (
@@ -211,12 +242,9 @@ export default function ProblemDetails() {
                 </div>
               ) : (<div className="text-gray-400 bg-gray-50 h-32 flex items-center justify-center rounded-lg">Sem GPS</div>)}
             </div>
-
-            {/* SEÇÃO DE COMENTÁRIOS (NOVA) */}
             {currentUser && <CommentsSection problemId={id} currentUser={currentUser} />}
           </div>
 
-          {/* Coluna Lateral (Ações) */}
           <div className="flex flex-col gap-4">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-800 mb-4">Gerenciar</h3>

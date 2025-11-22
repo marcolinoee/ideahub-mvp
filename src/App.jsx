@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import NewProblem from './pages/NewProblem';
 import ProblemDetails from './pages/ProblemDetails';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/new-problem" element={<NewProblem />} />
         <Route path="/problem/:id" element={<ProblemDetails />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );
