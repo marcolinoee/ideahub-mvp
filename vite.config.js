@@ -12,26 +12,10 @@ export default defineConfig({
         name: 'IdeaHub - Soluções Comunitárias',
         short_name: 'IdeaHub',
         description: 'Conectando comunidade e universidade para resolver problemas reais.',
-        theme_color: '#0B1120', // Azul Marinho da sua marca
+        theme_color: '#0B1120',
         background_color: '#ffffff',
-        display: 'standalone', // Isso faz abrir como app (sem barra de navegador)
+        display: 'standalone',
         icons: [
-          screenshots: [
-          {
-            src: "pwa-512x512.png", // Usamos o ícone mesmo só pra enganar a validação
-            sizes: "512x512",
-            type: "image/png",
-            form_factor: "wide",
-            label: "Desktop"
-          },
-          {
-            src: "pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            form_factor: "narrow",
-            label: "Mobile"
-          }
-        ]
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
@@ -47,6 +31,22 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
+          }
+        ],
+        screenshots: [
+          {
+            src: "pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            form_factor: "wide",
+            label: "Desktop"
+          },
+          {
+            src: "pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Mobile"
           }
         ]
       }
